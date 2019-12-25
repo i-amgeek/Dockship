@@ -34,7 +34,9 @@ import tqdm
 import shutil
 import subprocess
 import zipfile
+import json
 from pathlib import Path
+from alive_progress import alive_bar
 
 def run( modelID, port='5381' ):
   """
@@ -67,7 +69,7 @@ def run( modelID, port='5381' ):
 
   # Create configuration file containing API key if does not already exists.
   confPath = Path.home() / '.dockship/config'
-  if not confPath.is_file():
+  if not confPath.is_file() or (confPath.is_file() and os.path.getsize(confPath) == 0):
     confPath.parent.mkdir(parents=True, exist_ok=True)
     confPath.touch(exist_ok=True)
     APIkey = getpass("Your API key: ")
@@ -147,7 +149,7 @@ def run( modelID, port='5381' ):
   #   dockship_launch.py - For running flask code
   #   wsgi.py - For gunicorn
 
-  with open('info.json', 'w') as f: f.write(str(modelInfo))
+  with open('info.json', 'w') as f: json.dump(modelInfo, f)
   temp_url = "https://gist.github.com/i-amgeek/cf181dcf9f8a5611f72c2c73c65c5795/raw/dockship_launch.py"
   launch_file = requests.get(temp_url).text.replace("56733", port)
   with open('dockship_launch.py', 'w') as file:
@@ -172,12 +174,16 @@ CMD ["gunicorn","--workers", "3", "-b", "0.0.0.0:{port}", "wsgi:app"]\n'
   # Build docker image- {modelName} and run docker container- {modelID}_app
   password = getpass("Password for Sudo: ")
   docker_build = f"sudo -S docker build -t {modelName} -f Dockerfile . "
-  docker_run = f"docker run -dp {port}:{port} --name {modelID}_app {modelName}"
+  docker_run = f"sudo -S docker run -dp {port}:{port} --name {modelID}_app {modelName}"
   result = os.popen(f"echo {password} | sudo -S docker ps -a").read()
   if f"{modelID}_app" in result:
     result = os.popen(f"echo {password} | sudo -S docker start {modelID}_app").read()
   else:
-    result = os.popen(f"echo {password} | {docker_build}").read()
+    with alive_bar() as bar:
+      print("Docker Image building. It may take some time")
+      result = os.popen(f"echo {password} | {docker_build}").read()
+      bar()
+
     if "Successfully tagged" in result:         # TODO: Use returncode instead
         print("Docker image built successfully")
     else:

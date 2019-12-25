@@ -10,7 +10,7 @@ README = (HERE / "README.md").read_text()
 # This call to setup() does all the work
 setup(
     name="dockship",
-    version="0.1.1",
+    version="0.1.3",
     description="Run AI models in Docker containers",
     long_description=README,
     long_description_content_type="text/markdown",
@@ -24,7 +24,7 @@ setup(
         "Operating System :: OS Independent",
     ],
     packages=["dockship"],
-    install_requires=["fire", "requests", "tqdm"],
+    install_requires=["fire", "requests", "tqdm", "alive-progress"],
     entry_points={
         "console_scripts": [
             "dockship=dockship.__main__:main",
