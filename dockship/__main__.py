@@ -162,7 +162,7 @@ def run( modelID, port='5381' ):
   # Add hosting information in Dockerfile
   dockerfile_by_model_provider = open("Dockerfile", 'r').read()
   dockerfile_by_dockship = f'\nEXPOSE {port} \n\
-RUN pip3 install gunicorn Flask==1.1.1\n\
+RUN pip3 install dockship gunicorn Flask==1.1.1\n\
 CMD ["gunicorn","--workers", "3", "-b", "0.0.0.0:{port}", "wsgi:app"]\n'
   dockerfile = dockerfile_by_model_provider + dockerfile_by_dockship
   with open("Dockerfile", "w") as file:
